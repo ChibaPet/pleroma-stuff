@@ -1,0 +1,67 @@
+#!/bin/sh
+
+# Written in 2022 by Mason Loring Bliss <mason@blisses.org>
+#
+# To the extent possible under law, the author(s) have dedicated all
+# copyright and related and neighboring rights to this software to the
+# public domain worldwide. This software is distributed without any
+# warranty.
+#
+# You should have received a copy of the CC0 Public Domain Dedication
+# along with this software. If not, see:
+#
+#     http://creativecommons.org/publicdomain/zero/1.0/
+
+### BEGIN INIT INFO
+# Provides:          pleroma
+# Required-Start:    $all postgresql
+# Required-Stop:     $all
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: pleroma
+# Description: Pleroma social networking
+### END INIT INFO
+
+export PATH="/usr/bin:/bin:/usr/sbin:/sbin"
+export HOME="/opt/pleroma"
+
+USER="pleroma"
+COMMAND="/opt/pleroma/bin/pleroma"
+
+case "$1" in
+start)
+    echo "Starting social networking daemon: pleroma"
+    su -c 'screen -ls | grep -q Pleroma' - $USER
+    if [ $? -ne 0 ]; then
+        su -c "screen -d -m -S Pleroma $COMMAND start" - $USER
+    else
+        echo "pleroma already running."
+    fi
+    ;;
+stop)
+    su -c 'screen -ls | grep -q Pleroma' - $USER
+    if [ $? -eq 0 ]; then
+        su -c "$COMMAND stop" - $USER
+        echo -n "Stopping social networking daemon: pleroma"
+        while (su -c 'screen -ls | grep -q Pleroma' - $USER); do
+            sleep 1
+            echo -n '.'
+        done
+        echo
+    else
+        echo "pleroma not running."
+    fi
+    ;;
+status)
+    su -c 'screen -ls | grep -q Pleroma' - $USER
+    if [ $? -eq 0 ]; then
+        echo "pleroma is running."
+    else
+        echo "pleroma is not running."
+    fi
+    ;;
+restart|reload|force-reload)
+    ;;
+esac
+
+exit 0
